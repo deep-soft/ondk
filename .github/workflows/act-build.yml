@@ -1,0 +1,137 @@
+name: act - ondk build
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  linux:
+    name: Build for Linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out
+        uses: deep-soft/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python 3
+        uses: deep-soft/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Build toolchain
+        run: ./build.sh
+
+      - name: Upload build artifact
+        uses: deep-soft/upload-artifact@v3
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        with:
+          name: ondk-linux
+          path: dist/*.tar.xz
+
+      - name: Upload release assets
+        uses: deep-soft/action-gh-release@v1
+        # if: ${{ github.event_name == 'release' }}
+        with:
+          files: dist/*.tar.xz
+
+  windows:
+    name: Build for Windows
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Check out
+        uses: deep-soft/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: make diffutils tar patch unzip gzip
+          pacboy: 7zip:p python:p cmake:p gcc:p ninja:p
+
+      - name: Build toolchain
+        run: |
+          cp -r $GITHUB_WORKSPACE /c/ondk
+          cd /c/ondk
+          bash build-windows.sh
+
+      - name: Upload build artifact
+        uses: deep-soft/upload-artifact@v3
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        with:
+          name: ondk-windows
+          path: C:\ondk\dist\*.tar.xz
+
+      - name: Upload release assets
+        uses: deep-soft/action-gh-release@v1
+        if: ${{ github.event_name == 'release' }}
+        with:
+          files: C:/ondk/dist/*.tar.xz
+
+  macos-x86:
+    name: Build for macOS
+    runs-on: macos-latest
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Check out
+        uses: deep-soft/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python 3
+        uses: deep-soft/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Build toolchain
+        run: ./build.sh
+
+      - name: Upload build artifact
+        uses: deep-soft/upload-artifact@v3
+        with:
+          name: ondk-macos
+          path: dist/*.tar.xz
+
+  macos-universal:
+    name: Build for macOS (Universal)
+    runs-on: macos-latest
+    if: ${{ github.event_name == 'release' }}
+
+    steps:
+      - name: Check out
+        uses: deep-soft/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python 3
+        uses: deep-soft/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Build toolchain
+        run: ./build.sh
+        env:
+          SKIP_DIST: 1
+
+      - name: Download arm64 artifact
+        uses: robinraju/release-downloader@v1.8
+        with:
+          tag: ${{ github.event.release.tag_name }}
+          fileName: ondk-macos-arm64.tar.gz
+
+      - name: Build ONDK
+        run: ./dist-macos.sh
+
+      - name: Upload release assets
+        uses: deep-soft/action-gh-release@v1
+        with:
+          files: dist/*.tar.xz
