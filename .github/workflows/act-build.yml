@@ -35,6 +35,7 @@ jobs:
         uses: deep-soft/action-gh-release@v1
         # if: ${{ github.event_name == 'release' }}
         with:
+          tag: release
           files: dist/*.tar.xz
 
   windows:
@@ -74,6 +75,7 @@ jobs:
         uses: deep-soft/action-gh-release@v1
         # if: ${{ github.event_name == 'release' }}
         with:
+          tag: release
           files: C:/ondk/dist/*.tar.xz
 
   macos-x86:
@@ -104,7 +106,7 @@ jobs:
   macos-universal:
     name: Build for macOS (Universal)
     runs-on: macos-latest
-    # if: ${{ github.event_name == 'release' }}
+    if: ${{ github.event_name == 'release-final' }}
 
     steps:
       - name: Check out
@@ -124,6 +126,7 @@ jobs:
 
       - name: Download arm64 artifact
         uses: deep-soft/release-downloader@v1.8
+        continue-on-error: true
         with:
           tag: ${{ github.event.release.tag_name }}
           fileName: ondk-macos-arm64.tar.gz
@@ -134,4 +137,5 @@ jobs:
       - name: Upload release assets
         uses: deep-soft/action-gh-release@v1
         with:
+          tag: release
           files: dist/*.tar.xz
