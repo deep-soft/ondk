@@ -35,7 +35,7 @@ jobs:
         uses: deep-soft/action-gh-release@v1
         # if: ${{ github.event_name == 'release' }}
         with:
-          tag: release
+          tag_name: release
           files: dist/*.tar.xz
 
   windows:
@@ -75,7 +75,7 @@ jobs:
         uses: deep-soft/action-gh-release@v1
         # if: ${{ github.event_name == 'release' }}
         with:
-          tag: release
+          tag_name: release
           files: C:/ondk/dist/*.tar.xz
 
   macos-x86:
@@ -107,7 +107,7 @@ jobs:
         uses: deep-soft/action-gh-release@v1
         # if: ${{ github.event_name == 'release' }}
         with:
-          tag: release
+          tag_name: release
           files: dist/*.tar.xz
 
   macos-universal:
@@ -144,5 +144,5 @@ jobs:
       - name: Upload release assets
         uses: deep-soft/action-gh-release@v1
         with:
-          tag: release
+          tag_name: release
           files: dist/*.tar.xz
