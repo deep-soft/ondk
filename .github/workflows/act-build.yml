@@ -2,8 +2,18 @@ name: act - ondk build
 
 on:
   workflow_dispatch:
+    inputs:
+      TAG_NAME:
+        description: tag_name
+        default: 'release'
+        required: true
+
   release:
     types: [published]
+
+env:
+  TAG_NAME: 'release'
+
 
 jobs:
   linux:
@@ -15,6 +25,13 @@ jobs:
         uses: deep-soft/checkout@v3
         with:
           fetch-depth: 1
+
+      - name: set tag_name
+        shell: bash
+        run: |
+          if [[ ${{ inputs.TAG_NAME }} != '' ]]; then
+            echo "TAG_NAME=${{ inputs.TAG_NAME }}" >> $GITHUB_ENV
+          fi
 
       - name: Set up Python 3
         uses: deep-soft/setup-python@v4
@@ -35,7 +52,7 @@ jobs:
         uses: deep-soft/action-gh-release@v1
         # if: ${{ github.event_name == 'release' }}
         with:
-          tag_name: release
+          tag_name: ${{ env.TAG_NAME }}
           files: dist/*.tar.xz
 
   windows:
@@ -49,6 +66,13 @@ jobs:
         uses: deep-soft/checkout@v3
         with:
           fetch-depth: 1
+
+      - name: set tag_name
+        shell: bash
+        run: |
+          if [[ ${{ inputs.TAG_NAME }} != '' ]]; then
+            echo "TAG_NAME=${{ inputs.TAG_NAME }}" >> $GITHUB_ENV
+          fi
 
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
@@ -75,7 +99,7 @@ jobs:
         uses: deep-soft/action-gh-release@v1
         # if: ${{ github.event_name == 'release' }}
         with:
-          tag_name: release
+          tag_name: ${{ env.TAG_NAME }}
           files: C:/ondk/dist/*.tar.xz
 
   macos-x86:
@@ -88,6 +112,13 @@ jobs:
         uses: deep-soft/checkout@v3
         with:
           fetch-depth: 1
+
+      - name: set tag_name
+        shell: bash
+        run: |
+          if [[ ${{ inputs.TAG_NAME }} != '' ]]; then
+            echo "TAG_NAME=${{ inputs.TAG_NAME }}" >> $GITHUB_ENV
+          fi
 
       - name: Set up Python 3
         uses: deep-soft/setup-python@v4
@@ -107,7 +138,7 @@ jobs:
         uses: deep-soft/action-gh-release@v1
         # if: ${{ github.event_name == 'release' }}
         with:
-          tag_name: release
+          tag_name: ${{ env.TAG_NAME }}
           files: dist/*.tar.xz
 
   macos-universal:
@@ -120,6 +151,13 @@ jobs:
         uses: deep-soft/checkout@v3
         with:
           fetch-depth: 1
+
+      - name: set tag_name
+        shell: bash
+        run: |
+          if [[ ${{ inputs.TAG_NAME }} != '' ]]; then
+            echo "TAG_NAME=${{ inputs.TAG_NAME }}" >> $GITHUB_ENV
+          fi
 
       - name: Set up Python 3
         uses: deep-soft/setup-python@v4
@@ -144,5 +182,5 @@ jobs:
       - name: Upload release assets
         uses: deep-soft/action-gh-release@v1
         with:
-          tag_name: release
+          tag_name: ${{ env.TAG_NAME }}
           files: dist/*.tar.xz
