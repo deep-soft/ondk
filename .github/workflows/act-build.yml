@@ -7,6 +7,9 @@ on:
   release:
     types: [published]
 
+env:
+  TAG_NAME: 'release'
+
 jobs:
   linux:
     name: Build for Linux
@@ -38,6 +41,7 @@ jobs:
         # if: ${{ github.event_name == 'release' }}
         with:
           files: dist/*.tar.xz
+          tag_name: ${{ env.TAG_NAME }}
 
   windows:
     name: Build for Windows
@@ -77,6 +81,7 @@ jobs:
         # if: ${{ github.event_name == 'release' }}
         with:
           files: C:/ondk/dist/*.tar.xz
+          tag_name: ${{ env.TAG_NAME }}
 
   macos-x64:
     name: Build for macOS (x64)
@@ -174,6 +179,7 @@ jobs:
         # if: ${{ github.event_name == 'release' }}
         with:
           files: dist/*.tar.xz
+          tag_name: ${{ env.TAG_NAME }}
 
       - name: Remove x64 artifact
         uses: deep-soft/delete-artifact@v4
