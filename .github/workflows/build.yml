@@ -8,7 +8,7 @@ on:
 jobs:
   linux:
     name: Build for Linux
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Check out
@@ -22,7 +22,13 @@ jobs:
           python-version: "3.x"
 
       - name: Build toolchain
-        run: ./build.sh
+        run: |
+          sudo apt-get -y install cmake ninja-build libzstd-dev binutils-dev
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 17
+          rm llvm.sh
+          ./build.sh
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -32,7 +38,7 @@ jobs:
           path: dist/*.tar.xz
 
       - name: Upload release assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: ${{ github.event_name == 'release' }}
         with:
           files: dist/*.tar.xz
@@ -55,7 +61,7 @@ jobs:
           msystem: UCRT64
           update: true
           install: make diffutils tar patch unzip gzip
-          pacboy: 7zip:p python:p cmake:p gcc:p ninja:p
+          pacboy: 7zip:p python:p cmake:p gcc:p ninja:p zstd:p
 
       - name: Build toolchain
         run: |
@@ -71,7 +77,7 @@ jobs:
           path: C:\ondk\dist\*.tar.xz
 
       - name: Upload release assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: ${{ github.event_name == 'release' }}
         with:
           files: C:/ondk/dist/*.tar.xz
@@ -92,10 +98,9 @@ jobs:
           python-version: "3.x"
 
       - name: Build toolchain
-        env:
-          SKIP_DIST: 1
         run: |
-          ./build.sh
+          brew reinstall ninja zstd binutils
+          ./build.sh clone build
           mkdir tmp
           tar c out | xz --x86 --lzma2 > tmp/out.x64.tar.xz
 
@@ -121,10 +126,9 @@ jobs:
           python-version: "3.x"
 
       - name: Build toolchain
-        env:
-          SKIP_DIST: 1
         run: |
-          ./build.sh
+          brew reinstall ninja zstd binutils
+          ./build.sh clone build
           mkdir tmp
           tar c out | xz > tmp/out.arm64.tar.xz
 
@@ -168,7 +172,7 @@ jobs:
           path: dist/*.tar.xz
 
       - name: Upload release assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: ${{ github.event_name == 'release' }}
         with:
           files: dist/*.tar.xz

@@ -1,11 +1,11 @@
 change-id = 123711
 
 [llvm]
+thin-lto = true
 targets = "AArch64;ARM;X86;RISCV"
 experimental-targets = ""
+link-shared = true
 clang = true
-static-libstdcpp = true
-ldflags = "-s -static-libgcc -static"
 download-ci-llvm = false
 version-suffix = ""
 
@@ -13,7 +13,8 @@ version-suffix = ""
 LLVM_VERSION_SUFFIX = ""
 LLVM_ENABLE_ZSTD = "FORCE_ON"
 LLVM_USE_STATIC_ZSTD = "TRUE"
-LLVM_USE_SYMLINKS = "TRUE"
+LLVM_BINUTILS_INCDIR = "BREW_PREFIX/opt/binutils/include"
+LLVM_ENABLE_PLUGINS = "FORCE_ON"
 
 [build]
 docs = false
@@ -38,11 +39,13 @@ sysconfdir = "etc"
 channel = "nightly"
 lld = true
 llvm-tools = true
+jemalloc = true
+lto = "thin"
 strip = true
 codegen-units = 1
 
-[dist]
-include-mingw-linker = true
+[target.aarch64-apple-darwin]
+llvm-has-rust-patches = false
 
-[target.x86_64-pc-windows-gnu]
+[target.x86_64-apple-darwin]
 llvm-has-rust-patches = false

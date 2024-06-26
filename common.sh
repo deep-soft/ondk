@@ -1,21 +1,24 @@
 # Copyright 2022-2024 Google LLC.
 # SPDX-License-Identifier: Apache-2.0
 
-RUST_VERSION='1.76.0'
+RUST_VERSION='1.79.0'
 
-NDK_VERSION='r26c'
-NDK_DIR_VERSION='r26c'
+NDK_VERSION='r27-beta2'
+NDK_DIR_VERSION=$NDK_VERSION
 
 # These revisions are obtained from the NDK's LLVM manifest.xml and clang_source_info.md
 # Update in sync with the NDK package
-LLVM_VERSION='c4c5e79dd4b4c78eee7cffd9b0d7394b5bedcf12'
-LLVM_SVN='487747'
-LLVM_ANDROID_VERSION='0f058ab00ec6c9b8b39956c1393bcc405a5498d3'
-TOOLCHAIN_UTILS_VERSION='584b8e46d146a2bcfeffd64448a2d8e92904168d'
+LLVM_VERSION='3c92011b600bdf70424e2547594dd461fe411a41'
+LLVM_SVN='522817'
+LLVM_ANDROID_VERSION='438b79812959d90a4a9252ddab53f9d90d2d0d98'
+TOOLCHAIN_UTILS_VERSION='d865a56cd71d2673038848799595850c8113bbca'
 
-OUTPUT_VERSION='r26.4'
+OUTPUT_VERSION='r27.2'
 
 PYTHON_CMD='python3'
+
+set -e
+shopt -s nullglob
 
 # url sha
 git_clone_sha() {
@@ -58,11 +61,27 @@ clone() {
   # Move the NDK LLVM into Rust's source
   rm -rf rust/src/llvm-project
   mv llvm-project rust/src/llvm-project
+}
 
-  # Extract first stage build artifacts if exists
-  if [ -f tmp/build.tar.xz ]; then
-    xz -d < tmp/build.tar.xz | tar x
-  fi
+update_dir() {
+  local src=$1
+  local dest=$2
+
+  for d in $dest/*; do
+    local s=$src/$(basename $d)
+    # Copy regular files first
+    if [ -f $s ] && [ ! -L $s ]; then
+      cp -af $s $d
+    fi
+  done
+
+  for d in $dest/*; do
+    local s=$src/$(basename $d)
+    # Then copy over symlinks
+    if [ -L $s ]; then
+      cp -af $s $d
+    fi
+  done
 }
 
 dl_ndk() {
@@ -74,11 +93,55 @@ dl_ndk() {
   rm -rf $NDK_EXTRACT
   unzip -q $NDK_ZIP
   mv $NDK_EXTRACT ndk
+  echo $OUTPUT_VERSION > ndk/ONDK_VERSION
 }
 
 dist() {
-  echo $OUTPUT_VERSION > ndk/ONDK_VERSION
   mv ndk "ondk-${OUTPUT_VERSION}"
   mkdir dist
   tar c "ondk-${OUTPUT_VERSION}" | xz --x86 --lzma2 > "dist/ondk-${OUTPUT_VERSION}-${OS}.tar.xz"
+}
+
+run_cmd() {
+  case $1 in
+    clone)
+      rm -rf rust llvm-project llvm_android toolchain-utils
+      clone
+      ;;
+    build)
+      rm -rf out
+      build
+      ;;
+    ndk)
+      rm -rf ndk
+      ndk
+      ;;
+    dist)
+      rm -rf dist ondk-*
+      dist
+      ;;
+    clean)
+      rm -rf rust llvm-project llvm_android toolchain-utils \
+        out out.arm out.x86 ndk tmp mingw64 \
+        android-ndk-*.zip ondk-* dist mingw.7z
+      ;;
+    *)
+      echo "Unknown action \"$1\""
+      echo "./build.sh clone/build/ndk/dist"
+      exit 1
+      ;;
+  esac
+}
+
+parse_args() {
+  if [ $# -eq 0 ]; then
+    run_cmd clone
+    run_cmd build
+    run_cmd ndk
+    run_cmd dist
+  else
+    for arg in $@; do
+      run_cmd $arg
+    done
+  fi
 }
