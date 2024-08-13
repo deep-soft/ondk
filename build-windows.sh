@@ -17,6 +17,7 @@ OS='windows'
 NDK_DIRNAME='windows-x86_64'
 TRIPLE='x86_64-pc-windows-gnu'
 DYN_EXT='dll'
+EXE_FMT='PE32+'
 PYTHON_CMD='python'
 
 clean_storage() {
@@ -28,8 +29,13 @@ clean_storage() {
 }
 
 build() {
+  set_llvm_cfg LLVM_USE_SYMLINKS TRUE
+  set_llvm_cfg LLVM_ENABLE_LLD TRUE
+  set_build_cfg rust.use-lld self-contained
+  set_build_cfg dist.include-mingw-linker true
+
   cd rust
-  python ./x.py --config '../config-windows.toml' --build $TRIPLE install
+  eval python ./x.py --config ../config.toml --build $TRIPLE $(print_build_cfg) install
   cd ../
 
   cd out

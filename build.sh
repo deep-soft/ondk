@@ -33,14 +33,25 @@ fi
 
 build() {
   if [ $OS = "darwin" ]; then
-    sed "s|BREW_PREFIX|$(brew --prefix)|g" config-darwin-sample.toml > config-darwin.toml
     export MACOSX_DEPLOYMENT_TARGET=11.0
     # Manually set page size if cross compilation is required (arm64 require 16k page)
     # export JEMALLOC_SYS_WITH_LG_PAGE=14
+
+    set_llvm_cfg LLVM_BINUTILS_INCDIR $(brew --prefix)/opt/binutils/include
+    set_build_cfg rust.jemalloc true
+  else
+    set_llvm_cfg LLVM_BINUTILS_INCDIR /usr/include
+    set_build_cfg llvm.static-libstdcpp true
+    set_build_cfg rust.use-lld self-contained
   fi
 
+  set_llvm_cfg LLVM_ENABLE_PLUGINS FORCE_ON
+  set_build_cfg llvm.thin-lto true
+  set_build_cfg llvm.link-shared true
+  set_build_cfg rust.lto thin
+
   cd rust
-  python3 ./x.py --config "../config-${OS}.toml" --host $TRIPLE install
+  eval python3 ./x.py --config ../config.toml --host $TRIPLE $(print_build_cfg) install
   cd ../
 
   cd out
@@ -49,11 +60,7 @@ build() {
   cp -af lib/rustlib/$TRIPLE/bin/rust-lld llvm-bin/lld
   ln -sf lld llvm-bin/ld
   find ../rust/build/$TRIPLE/llvm/lib -name "*.${DYN_EXT}*" -exec cp -an {} lib \;
-
-  # Strip executables
-  llvm-bin/llvm-strip -s $(find llvm-bin -type f -exec sh -c "file {} | grep -q $EXE_FMT" \; -print)
-  llvm-bin/llvm-strip -s $(find lib -maxdepth 1 -type f -exec sh -c "file {} | grep -q $EXE_FMT" \; -print)
-
+  strip_exe
   cd ..
 }
 
