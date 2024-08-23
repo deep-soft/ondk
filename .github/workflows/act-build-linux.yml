@@ -1,0 +1,50 @@
+# 2024-08-24 01:10
+# only linux
+name: act - ondk build - linux
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+env:
+  TAG_NAME: 'release'
+
+jobs:
+  linux:
+    name: Build for Linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out
+        uses: deep-soft/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python 3
+        uses: deep-soft/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Build toolchain
+        run: |
+          sudo apt-get -y install cmake ninja-build libzstd-dev binutils-dev
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 18
+          rm llvm.sh
+          ./build.sh
+
+      - name: Upload build artifact
+        uses: deep-soft/upload-artifact@v4
+        # if: ${{ github.event_name == 'workflow_dispatch' }}
+        with:
+          name: ondk-linux
+          path: dist/*.tar.xz
+
+      - name: Upload release assets
+        uses: deep-soft/action-gh-release@v2.1
+        # if: ${{ github.event_name == 'release' }}
+        with:
+          files: dist/*.tar.xz
+          tag_name: ${{ env.TAG_NAME }}
