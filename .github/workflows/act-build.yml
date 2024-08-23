@@ -27,7 +27,7 @@ jobs:
           python-version: "3.x"
 
       - name: Build toolchain
-        run: 
+        run: |
           sudo apt-get -y install cmake ninja-build libzstd-dev binutils-dev
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
