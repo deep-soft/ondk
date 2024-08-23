@@ -1,4 +1,4 @@
-# 2024-02-02 11:20
+# 2024-08-23 16:10
 # 
 name: act - ondk build
 
@@ -27,7 +27,13 @@ jobs:
           python-version: "3.x"
 
       - name: Build toolchain
-        run: ./build.sh
+        run: 
+          sudo apt-get -y install cmake ninja-build libzstd-dev binutils-dev
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 18
+          rm llvm.sh
+          ./build.sh
 
       - name: Upload build artifact
         uses: deep-soft/upload-artifact@v4
@@ -61,7 +67,7 @@ jobs:
           msystem: UCRT64
           update: true
           install: make diffutils tar patch unzip gzip
-          pacboy: 7zip:p python:p cmake:p gcc:p ninja:p
+          pacboy: 7zip:p python:p cmake:p gcc:p ninja:p zstd:p clang:p lld:p
 
       - name: Build toolchain
         run: |
@@ -99,10 +105,9 @@ jobs:
           python-version: "3.x"
 
       - name: Build toolchain
-        env:
-          SKIP_DIST: 1
         run: |
-          ./build.sh
+          brew reinstall ninja zstd binutils
+          ./build.sh clone build
           mkdir tmp
           tar c out | xz --x86 --lzma2 > tmp/out.x64.tar.xz
 
@@ -128,10 +133,9 @@ jobs:
           python-version: "3.x"
 
       - name: Build toolchain
-        env:
-          SKIP_DIST: 1
         run: |
-          ./build.sh
+          brew reinstall ninja zstd binutils
+          ./build.sh clone build
           mkdir tmp
           tar c out | xz > tmp/out.arm64.tar.xz
 
